@@ -1,0 +1,91 @@
+
+---
+title: Programming assignment 3
+format: gfm
+date: last-modified
+date-format: iso
+---
+
+'''
+#| label: setup
+
+# install.packages(c("tidyverse"))  # run once if needed
+
+library(tidyverse)
+
+# Path to the CSV created by your Praat script
+
+dat <- read_csv("data/vowel_data.csv", show_col_types = FALSE)
+
+# Peek at structure
+
+glimpse(dat)
+
+# Make sure expected columns exist:
+
+# id, item, vowel, language, f1_cent, f2_cent, tl, f1_20...f2_80
+
+stopifnot(all(c("id","item","vowel","language","f1_cent","f2_cent","tl") %in% names(dat)))
+
+# Optional: order vowels (edit to your inventory)
+
+dat <- dat %>%
+mutate(
+vowel = factor(vowel),
+language = factor(language)
+)
+
+#| label: descriptives
+descriptives <- dat %>%
+group_by(language, vowel) %>%
+summarise(
+n        = n(),
+mean_f1  = mean(f1_cent, na.rm = TRUE),
+sd_f1    = sd(f1_cent, na.rm = TRUE),
+se_f1    = sd_f1 / sqrt(n),
+mean_f2  = mean(f2_cent, na.rm = TRUE),
+sd_f2    = sd(f2_cent, na.rm = TRUE),
+se_f2    = sd_f2 / sqrt(n),
+mean_tl  = mean(tl, na.rm = TRUE),
+sd_tl    = sd(tl, na.rm = TRUE),
+se_tl    = sd_tl / sqrt(n),
+.groups = "drop"
+)
+
+descriptives
+#| label: plot-tl
+#| fig-cap: "Trajectory length (mean ± SE) by vowel and language"
+ggplot(descriptives, aes(x = vowel, y = mean_tl, fill = language)) +
+geom_col(position = position_dodge(width = 0.7)) +
+geom_errorbar(
+aes(ymin = mean_tl - se_tl, ymax = mean_tl + se_tl),
+position = position_dodge(width = 0.7),
+width = 0.2
+) +
+labs(x = "Vowel", y = "Trajectory length (F1–F2 units)", fill = "Language")
+#| label: plot-f1
+#| fig-cap: "F1 centroid (mean ± SE) by vowel and language"
+ggplot(descriptives, aes(x = vowel, y = mean_f1, fill = language)) +
+geom_col(position = position_dodge(width = 0.7)) +
+geom_errorbar(
+aes(ymin = mean_f1 - se_f1, ymax = mean_f1 + se_f1),
+position = position_dodge(width = 0.7),
+width = 0.2
+) +
+labs(x = "Vowel", y = "F1 (Hz)", fill = "Language")
+
+#| label: plot-f2
+#| fig-cap: "F2 centroid (mean ± SE) by vowel and language"
+ggplot(descriptives, aes(x = vowel, y = mean_f2, fill = language)) +
+geom_col(position = position_dodge(width = 0.7)) +
+geom_errorbar(
+aes(ymin = mean_f2 - se_f2, ymax = mean_f2 + se_f2),
+position = position_dodge(width = 0.7),
+width = 0.2
+) +
+labs(x = "Vowel", y = "F2 (Hz)", fill = "Language")
+
+---
+
+
+
